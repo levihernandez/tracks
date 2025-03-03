@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tracking-container">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Tracking Order #{{ tracking.order_number }}</h2>
+            <div class="status-badge {{ tracking.status.lower() }}">{{ tracking.status }}</div>
+            
+            <div class="shipping-details card mt-3 mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Origin</h5>
+                            <p>{{ tracking.origin }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Destination</h5>
+                            <p>{{ tracking.destination }}</p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <h5>Cost</h5>
+                            <p>${{ "%.2f"|format(tracking.cost) }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>ETA</h5>
+                            <p>{{ tracking.eta|default('Calculating...', true) }}</p>
+                        </div>
+                        <!-- ... in the shipping-details card ... -->
+                        <div class="col-md-12">
+                            <h5>Current Location</h5>
+                            <p>
+                                {{ tracking.current_location }}<br>
+                                <small class="text-muted">
+                                    ({{ "%.4f"|format(tracking.current_lat) }}, {{ "%.4f"|format(tracking.current_lng) }})
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- In the existing template, update the map container -->
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+            
+            <!-- Hidden inputs for map -->
+            <input type="hidden" id="orderNumber" value="{{ tracking.order_number }}" />
+            <input type="hidden" id="originLat" value="{{ tracking.route.origin_lat }}" />
+            <input type="hidden" id="originLng" value="{{ tracking.route.origin_lng }}" />
+            <input type="hidden" id="destLat" value="{{ tracking.route.destination_lat }}" />
+            <input type="hidden" id="destLng" value="{{ tracking.route.destination_lng }}" />
+            <input type="hidden" id="currentLat" value="{{ tracking.current_lat }}" />
+            <input type="hidden" id="currentLng" value="{{ tracking.current_lng }}" />
+            
+            <!-- <div class="tracking-info mt-3">
+                <div class="progress">
+                    <div id="routeProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                    <span>ETA: <span id="eta">{{ tracking.eta|default('Calculating...', true) }}</span></span>
+                    <span>Distance remaining: <span id="distance">Calculating...</span></span>
+                </div>
+            </div> -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tracking.css') }}" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="{{ url_for('static', filename='js/tracking.js') }}"></script>
+{% endblock %}

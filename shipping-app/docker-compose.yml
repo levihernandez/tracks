@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  shipping-db:
+    image: postgres:15-alpine
+    container_name: shipping-db
+    environment:
+      POSTGRES_DB: shipping_db
+      POSTGRES_USER: shipping_user
+      POSTGRES_PASSWORD: shipping_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - shipping_data:/var/lib/postgresql/data
+      - ./shipping-service/src/main/resources/db/init/tables.sql:/docker-entrypoint-initdb.d/01-tables.sql
+      - ./shipping-service/src/main/resources/db/init/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - shipping-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shipping_user -d shipping_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  shipping-service:
+    build: ./shipping-service
+    container_name: shipping-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shipping-db:5432/shipping_db
+      SPRING_DATASOURCE_USERNAME: shipping_user
+      SPRING_DATASOURCE_PASSWORD: shipping_password
+      ROUTES_SERVICE_URL: http://routes-service:8000
+    depends_on:
+      shipping-db:
+        condition: service_healthy
+    networks:
+      - shipping-network
+      - app-network
+
+  routes-db:
+    image: postgres:15-alpine
+    container_name: routes-db
+    environment:
+      POSTGRES_DB: routes_db
+      POSTGRES_USER: routes_user
+      POSTGRES_PASSWORD: routes_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - routes_data:/var/lib/postgresql/data
+      - ./routes-service/db/init/tables.sql:/docker-entrypoint-initdb.d/01-tables.sql
+      - ./routes-service/db/init/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - routes-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U routes_user -d routes_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  routes-service:
+    build: ./routes-service
+    container_name: routes-service
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://routes_user:routes_password@routes-db:5432/routes_db
+    depends_on:
+      routes-db:
+        condition: service_healthy
+    networks:
+      - routes-network
+      - app-network
+
+  tracking-ui:
+    build: ./tracking-ui
+    container_name: tracking-ui
+    ports:
+      - "5001:5000"
+    environment:
+      SHIPPING_SERVICE_URL: http://shipping-service:8080
+      ROUTES_SERVICE_URL: http://routes-service:8000
+    depends_on:
+      - routes-service
+      - shipping-service
+    networks:
+      - app-network
+
+networks:
+  shipping-network:
+  routes-network:
+  app-network:
+
+volumes:
+  shipping_data:
+  routes_data:

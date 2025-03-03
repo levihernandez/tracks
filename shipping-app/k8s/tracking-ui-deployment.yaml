@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tracking-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tracking-ui
+  template:
+    metadata:
+      labels:
+        app: tracking-ui
+    spec:
+      containers:
+      - name: tracking-ui
+        image: levihernandez/tracking-ui:latest
+        imagePullPolicy: Never
+        env:
+        - name: SHIPPING_SERVICE_URL
+          value: http://shipping-service:8080
+        - name: ROUTES_SERVICE_URL
+          value: http://routes-service:8000
+        ports:
+        - containerPort: 5000

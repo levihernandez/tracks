@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tracking-container">
+    <h2>Track Your Shipment</h2>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form action="/tracking" method="GET" class="mt-4">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" name="order_id" 
+                           placeholder="Enter your tracking number" required>
+                    <button class="btn btn-primary" type="submit">Track</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

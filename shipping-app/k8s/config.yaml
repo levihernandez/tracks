@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shipping-config
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://shipping-db:5432/shipping_db
+  ROUTES_SERVICE_URL: http://routes-service:8000
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: routes-config
+data:
+  DATABASE_URL: postgresql://routes_user:routes_password@routes-db:5432/routes_db
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+type: Opaque
+stringData:
+  shipping-user: shipping_user
+  shipping-password: shipping_password
+  routes-user: routes_user
+  routes-password: routes_password

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shipping-stack
+  template:
+    metadata:
+      labels:
+        app: shipping-stack
+    spec:
+      containers:
+      - name: shipping-db
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: shipping_db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: shipping-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: shipping-password
+        volumeMounts:
+        - name: shipping-db-data
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+      
+      - name: shipping-service
+        image: levihernandez/shipping-service:latest
+        imagePullPolicy: Never
+        envFrom:
+        - configMapRef:
+            name: shipping-config
+        ports:
+        - containerPort: 8080
+      
+      volumes:
+      - name: shipping-db-data
+        persistentVolumeClaim:
+          claimName: shipping-db-pvc
+      - name: init-scripts
+        configMap:
+          name: shipping-db-init

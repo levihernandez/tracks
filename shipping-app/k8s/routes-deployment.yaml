@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: routes-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: routes-stack
+  template:
+    metadata:
+      labels:
+        app: routes-stack
+    spec:
+      containers:
+      - name: routes-db
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: routes_db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: routes-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: routes-password
+        volumeMounts:
+        - name: routes-db-data
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+      
+      - name: routes-service
+        image: levihernandez/routes-service:latest
+        imagePullPolicy: Never
+        envFrom:
+        - configMapRef:
+            name: routes-config
+        ports:
+        - containerPort: 8000
+      
+      volumes:
+      - name: routes-db-data
+        persistentVolumeClaim:
+          claimName: routes-db-pvc
+      - name: init-scripts
+        configMap:
+          name: routes-db-init
